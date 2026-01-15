@@ -1,5 +1,6 @@
 
 export type CategoryType = 'home' | 'stories' | 'cartoon' | 'educational' | 'songs' | 'saved' | 'settings' | 'admin';
+export type AppTheme = 'default' | 'forest' | 'candy' | 'galaxy';
 
 export interface Video {
   id: string;
@@ -13,6 +14,7 @@ export interface Video {
 export interface AppSettings {
   isDarkMode: boolean;
   soundEnabled: boolean;
+  theme: AppTheme;
 }
 
 export interface HealthCheckReport {

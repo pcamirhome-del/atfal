@@ -12,27 +12,57 @@
     <style>
       body {
         font-family: 'Tajawal', sans-serif;
-        cursor: url('https://cur.cursors-4u.net/games/gam-4/gam372.cur'), auto;
+        overflow-x: hidden;
+        min-height: 100-vh;
       }
-      .pastel-gradient {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      
+      /* Glassmorphism Classes */
+      .glass-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
       }
-      .dark .pastel-gradient {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+
+      .dark .glass-card {
+        background: rgba(15, 23, 42, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
       }
-      /* Custom scrollbar for a cleaner look */
-      ::-webkit-scrollbar {
-        width: 8px;
+
+      .glass-nav {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
       }
-      ::-webkit-scrollbar-track {
-        background: transparent;
+
+      /* Login Glow Effect */
+      .login-glow:hover {
+        box-shadow: 0 0 30px rgba(56, 189, 248, 0.4);
+        border-color: rgba(56, 189, 248, 0.5);
       }
-      ::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
+
+      /* Backgrounds for Themes */
+      .bg-theme-default {
+        background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+        background-image: url('https://www.transparenttextures.com/patterns/cubes.png'), linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
       }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
+      .bg-theme-forest {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        background-image: url('https://www.transparenttextures.com/patterns/leaves.png'), linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      }
+      .bg-theme-candy {
+        background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+        background-image: url('https://www.transparenttextures.com/patterns/candy-cane.png'), linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+      }
+      .bg-theme-galaxy {
+        background: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 100%);
+        background-image: url('https://www.transparenttextures.com/patterns/stardust.png'), linear-gradient(135deg, #1e1b4b 0%, #4c1d95 100%);
       }
     </style>
   <script type="importmap">
@@ -45,7 +75,7 @@
 }
 </script>
 </head>
-  <body>
+  <body class="transition-all duration-700">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
