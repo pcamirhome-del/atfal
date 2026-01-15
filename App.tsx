@@ -230,7 +230,7 @@ const App: React.FC = () => {
                     </div>
                   </header>
 
-                  <div className={`${settings.theme === 'grid_modern' ? 'video-grid' : 'flex flex-col gap-16'}`}>
+                  <div className={`${settings.theme === 'grid_modern' ? 'video-grid' : 'flex flex-col gap-10 lg:gap-16'}`}>
                     {getFilteredVideos().length > 0 ? (
                       getFilteredVideos().map(video => (
                         <VideoCard 
@@ -257,7 +257,7 @@ const App: React.FC = () => {
                       <span className="text-4xl">🎁</span>
                       <h3 className="text-3xl font-black">اقتراحات رائعة لك</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                       {suggestedVideos.map(video => (
                         <VideoCard 
                           key={`suggested-${video.id}`} 
@@ -278,48 +278,51 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Theater Mode Modal - Centers Video & allows Full Width */}
+      {/* Optimized Theater Mode Modal */}
       {activeVideo && (
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 lg:p-10 bg-black/90 backdrop-blur-3xl animate-fade-in"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-10 bg-black/95 backdrop-blur-3xl animate-fade-in"
           onClick={() => setActiveVideo(null)}
         >
           <div 
-            className={`glass-card rounded-[3rem] overflow-hidden border border-white/20 shadow-[0_0_100px_rgba(0,0,0,0.8)] transition-all duration-500 relative
-              ${isFullWidth ? 'w-full h-full' : 'max-w-6xl w-full aspect-video'}
+            className={`glass-card rounded-[2rem] md:rounded-[3.5rem] overflow-hidden border border-white/20 shadow-[0_0_150px_rgba(0,0,0,0.9)] transition-all duration-700 relative flex flex-col
+              ${isFullWidth ? 'w-full h-full rounded-none' : 'w-[98vw] md:w-[85vw] max-w-7xl aspect-video'}
             `}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Control Bar */}
-            <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-50 opacity-0 hover:opacity-100 transition-opacity">
-               <div className="flex gap-4">
+            {/* Intelligent Control Bar */}
+            <div className="absolute top-4 md:top-8 left-4 md:left-8 right-4 md:right-8 flex justify-between items-center z-50 transition-all">
+               <div className="flex gap-3 md:gap-4">
                   <button 
                     onClick={() => setIsFullWidth(!isFullWidth)}
-                    className="w-12 h-12 glass-card rounded-full flex items-center justify-center text-white text-xl hover:bg-white/20 border-white/30"
-                    title={isFullWidth ? "عرض عادي" : "عرض بكامل الشاشة"}
+                    className="w-10 h-10 md:w-14 md:h-14 glass-card rounded-2xl flex items-center justify-center text-white text-xl hover:bg-white/20 border-white/30"
+                    title={isFullWidth ? "عرض مريح" : "عرض كامل الشاشة"}
                   >
                     {isFullWidth ? '📉' : '📈'}
                   </button>
                   <button 
                     onClick={() => setActiveVideo(null)}
-                    className="w-12 h-12 glass-card rounded-full flex items-center justify-center text-white text-xl hover:bg-white/20 border-white/30"
+                    className="w-10 h-10 md:w-14 md:h-14 glass-card rounded-2xl flex items-center justify-center text-white text-xl hover:bg-red-500/40 border-white/30"
                     title="إغلاق"
                   >
                     ✕
                   </button>
                </div>
-               <div className="glass-card px-6 py-2 rounded-full border-white/20 bg-black/40">
-                  <span className="font-black text-sm truncate max-w-[300px] inline-block">{activeVideo.title}</span>
+               
+               <div className="glass-card px-4 md:px-8 py-2 md:py-3 rounded-2xl border-white/20 bg-black/40 backdrop-blur-lg hidden sm:block">
+                  <span className="font-black text-sm md:text-lg truncate max-w-[200px] md:max-w-[400px] inline-block">{activeVideo.title}</span>
                </div>
             </div>
 
-            <iframe
-              src={`${getEmbedUrl(activeVideo.url)}?vq=${settings.defaultQuality}&autoplay=1&rel=1&modestbranding=0&showinfo=1&enablejsapi=1&origin=${window.location.origin}`}
-              className="w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
+            <div className="flex-1 w-full relative">
+              <iframe
+                src={`${getEmbedUrl(activeVideo.url)}?vq=${settings.defaultQuality}&autoplay=1&rel=1&modestbranding=0&showinfo=1&enablejsapi=1&origin=${window.location.origin}`}
+                className="absolute inset-0 w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
           </div>
         </div>
       )}
