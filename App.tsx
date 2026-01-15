@@ -40,6 +40,22 @@ const App: React.FC = () => {
     if (storedSaved) setSavedIds(JSON.parse(storedSaved));
     if (storedCats) setCategories(JSON.parse(storedCats));
     if (storedSettings) setSettings(JSON.parse(storedSettings));
+
+    // Intercept all clicks to prevent external navigation
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest('a');
+      if (anchor && anchor.href) {
+        const url = new URL(anchor.href);
+        if (url.origin !== window.location.origin) {
+          e.preventDefault();
+          alert('عذراً، لا يمكن الخروج من التطبيق للحفاظ على سلامتك. 🛡️');
+        }
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick);
+    return () => document.removeEventListener('click', handleGlobalClick);
   }, []);
 
   useEffect(() => {
@@ -110,7 +126,6 @@ const App: React.FC = () => {
       setAiSearchResults(matchIds);
     } catch (error) {
       console.error("AI Search Error:", error);
-      // Fallback simple search
       const fallback = videos
         .filter(v => v.title.toLowerCase().includes(query.toLowerCase()))
         .map(v => v.id);
@@ -210,7 +225,7 @@ const App: React.FC = () => {
                           isSaved={savedIds.includes(video.id)}
                           onSave={() => handleSaveVideo(video.id)}
                           allVideos={videos}
-                          onSelectVideo={(v) => { /* Selection Logic */ }}
+                          onSelectVideo={(v) => { /* Scroll Logic handled in child */ }}
                           defaultQuality={settings.defaultQuality}
                         />
                       ))

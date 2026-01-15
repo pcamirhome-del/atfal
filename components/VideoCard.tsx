@@ -14,7 +14,8 @@ interface VideoCardProps {
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos, onSelectVideo, defaultQuality }) => {
   const [currentQuality, setCurrentQuality] = useState<VideoQuality>(defaultQuality);
-  const [showQualityModal, setShowQualityModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authReason, setAuthReason] = useState<'quality' | 'exit'>('quality');
   const [pendingQuality, setPendingQuality] = useState<VideoQuality | null>(null);
   const [pass, setPass] = useState('');
   const [error, setError] = useState(false);
@@ -32,16 +33,29 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
   ];
 
   const handleQualityRequest = (q: VideoQuality) => {
+    setAuthReason('quality');
     setPendingQuality(q);
-    setShowQualityModal(true);
+    setShowAuthModal(true);
+    setPass('');
+    setError(false);
+  };
+
+  const handleExitAttempt = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAuthReason('exit');
+    setShowAuthModal(true);
     setPass('');
     setError(false);
   };
 
   const verifyPass = () => {
     if (pass === 'admin') {
-      if (pendingQuality) setCurrentQuality(pendingQuality);
-      setShowQualityModal(false);
+      if (authReason === 'quality' && pendingQuality) {
+        setCurrentQuality(pendingQuality);
+      } else if (authReason === 'exit') {
+        alert('تم فك القفل مؤقتاً.. ولكن يمنع الخروج التلقائي للحماية.');
+      }
+      setShowAuthModal(false);
       setPendingQuality(null);
     } else {
       setError(true);
@@ -53,7 +67,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
     .sort(() => 0.5 - Math.random())
     .slice(0, 4);
 
-  const embedUrl = `${getEmbedUrl(video.url)}?vq=${currentQuality}&rel=0&showinfo=0&modestbranding=1&iv_load_policy=3&disablekb=1`;
+  const embedUrl = `${getEmbedUrl(video.url)}?vq=${currentQuality}&rel=0&showinfo=0&modestbranding=1&iv_load_policy=3&disablekb=1&enablejsapi=1&origin=${window.location.origin}`;
 
   const getYoutubeThumb = (url: string) => {
     const id = url.split('v=')[1]?.split('&')[0];
@@ -63,6 +77,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
 
   return (
     <div className="w-full glass-card rounded-[3rem] p-4 lg:p-8 border border-white/20 transition-all duration-500 hover:border-white/40">
+      {/* Huge Video Player Container */}
       <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-2xl video-container mb-8 bg-black/40">
         <iframe
           src={embedUrl}
@@ -71,7 +86,16 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
+          // Using sandbox to block standard popups and navigation from within the iframe
+          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
         ></iframe>
+
+        {/* INVISIBLE SHIELD: Intercepts clicks on the YouTube logo (usually bottom right) */}
+        <div 
+          onClick={handleExitAttempt}
+          className="absolute bottom-1 right-1 w-32 h-16 z-30 cursor-pointer bg-transparent"
+          title="محمي ضد الخروج"
+        />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start justify-between">
@@ -126,13 +150,17 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
         </div>
       </div>
 
-      {/* Admin Password Modal for Quality */}
-      {showQualityModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-6">
+      {/* Parental Auth Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-6" onClick={(e) => e.stopPropagation()}>
           <div className="glass-card p-12 rounded-[3.5rem] w-full max-w-sm text-center border-white/30 animate-scale-up">
-            <div className="text-6xl mb-6">👧👦</div>
-            <h3 className="text-2xl font-black mb-2">استأذن من والديك</h3>
-            <p className="text-sm opacity-60 mb-8">يجب إدخال كلمة السر لتغيير الجودة</p>
+            <div className="text-6xl mb-6">{authReason === 'quality' ? '👧👦' : '🛡️'}</div>
+            <h3 className="text-2xl font-black mb-2">
+              {authReason === 'quality' ? 'استأذن من والديك' : 'حماية أحباب الله'}
+            </h3>
+            <p className="text-sm opacity-60 mb-8">
+              {authReason === 'quality' ? 'يجب إدخال كلمة السر لتغيير الجودة' : 'يمنع الخروج لموقع يوتيوب نهائياً.. أدخل رمز المسؤول للتأكيد.'}
+            </p>
             
             <input 
               type="password" 
@@ -146,7 +174,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
             
             <div className="flex gap-4">
               <button onClick={verifyPass} className="flex-1 bg-white text-sky-600 font-black py-4 rounded-[1.5rem] shadow-xl hover:bg-sky-50">تأكيد</button>
-              <button onClick={() => setShowQualityModal(false)} className="flex-1 bg-white/10 font-bold py-4 rounded-[1.5rem] hover:bg-white/20">إغلاق</button>
+              <button onClick={() => setShowAuthModal(false)} className="flex-1 bg-white/10 font-bold py-4 rounded-[1.5rem] hover:bg-white/20">إغلاق</button>
             </div>
           </div>
         </div>
