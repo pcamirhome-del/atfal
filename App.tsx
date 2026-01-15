@@ -27,6 +27,10 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [aiSearchResults, setAiSearchResults] = useState<string[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  
+  // State for Theater Mode / Focused Video
+  const [activeVideo, setActiveVideo] = useState<Video | null>(null);
+  const [isFullWidth, setIsFullWidth] = useState(false);
 
   // AI Client
   const aiRef = useRef<GoogleGenAI | null>(null);
@@ -45,7 +49,6 @@ const App: React.FC = () => {
       setSettings({ ...settings, ...parsed });
     }
 
-    // Global Mouse Listener for Reveal Highlight
     const handleMouseMove = (e: MouseEvent) => {
       document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
       document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
@@ -157,6 +160,12 @@ const App: React.FC = () => {
     }
   };
 
+  const openTheaterMode = (video: Video) => {
+    playClick();
+    setActiveVideo(video);
+    setIsFullWidth(false);
+  };
+
   return (
     <div 
       className="min-h-screen flex text-white overflow-hidden relative"
@@ -230,7 +239,7 @@ const App: React.FC = () => {
                           isSaved={savedIds.includes(video.id)}
                           onSave={() => handleSaveVideo(video.id)}
                           allVideos={videos}
-                          onSelectVideo={(v) => { /* Selection */ }}
+                          onSelectVideo={openTheaterMode}
                           defaultQuality={settings.defaultQuality}
                         />
                       ))
@@ -256,7 +265,7 @@ const App: React.FC = () => {
                           isSaved={savedIds.includes(video.id)}
                           onSave={() => handleSaveVideo(video.id)}
                           allVideos={videos}
-                          onSelectVideo={() => {}}
+                          onSelectVideo={openTheaterMode}
                           defaultQuality={settings.defaultQuality}
                         />
                       ))}
@@ -268,6 +277,52 @@ const App: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Theater Mode Modal - Centers Video & allows Full Width */}
+      {activeVideo && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 lg:p-10 bg-black/90 backdrop-blur-3xl animate-fade-in"
+          onClick={() => setActiveVideo(null)}
+        >
+          <div 
+            className={`glass-card rounded-[3rem] overflow-hidden border border-white/20 shadow-[0_0_100px_rgba(0,0,0,0.8)] transition-all duration-500 relative
+              ${isFullWidth ? 'w-full h-full' : 'max-w-6xl w-full aspect-video'}
+            `}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Control Bar */}
+            <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-50 opacity-0 hover:opacity-100 transition-opacity">
+               <div className="flex gap-4">
+                  <button 
+                    onClick={() => setIsFullWidth(!isFullWidth)}
+                    className="w-12 h-12 glass-card rounded-full flex items-center justify-center text-white text-xl hover:bg-white/20 border-white/30"
+                    title={isFullWidth ? "عرض عادي" : "عرض بكامل الشاشة"}
+                  >
+                    {isFullWidth ? '📉' : '📈'}
+                  </button>
+                  <button 
+                    onClick={() => setActiveVideo(null)}
+                    className="w-12 h-12 glass-card rounded-full flex items-center justify-center text-white text-xl hover:bg-white/20 border-white/30"
+                    title="إغلاق"
+                  >
+                    ✕
+                  </button>
+               </div>
+               <div className="glass-card px-6 py-2 rounded-full border-white/20 bg-black/40">
+                  <span className="font-black text-sm truncate max-w-[300px] inline-block">{activeVideo.title}</span>
+               </div>
+            </div>
+
+            <iframe
+              src={`${getEmbedUrl(activeVideo.url)}?vq=${settings.defaultQuality}&autoplay=1&rel=1&modestbranding=0&showinfo=1&enablejsapi=1&origin=${window.location.origin}`}
+              className="w-full h-full"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        </div>
+      )}
 
       <div className="lg:hidden fixed top-0 left-0 right-0 h-20 glass-nav flex items-center justify-between px-8 z-40 border-b border-white/10">
         <button onClick={(e) => { e.stopPropagation(); setIsSidebarOpen(true); }} className="text-3xl">☰</button>

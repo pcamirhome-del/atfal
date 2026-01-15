@@ -72,9 +72,10 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
   const embedBase = getEmbedUrl(video.url);
   const isInvalidChannel = embedBase === 'INVALID_CHANNEL_EMBED';
   
+  // Updated embedUrl: rel=1 to allow suggested videos from YouTube
   const embedUrl = isInvalidChannel 
     ? '' 
-    : `${embedBase}?vq=${currentQuality}&rel=0&showinfo=0&modestbranding=1&iv_load_policy=3&disablekb=1&enablejsapi=1&origin=${window.location.origin}`;
+    : `${embedBase}?vq=${currentQuality}&rel=1&showinfo=1&modestbranding=0&iv_load_policy=1&disablekb=0&enablejsapi=1&origin=${window.location.origin}`;
 
   const getYoutubeThumb = (url: string) => {
     const id = url.split('v=')[1]?.split('&')[0];
@@ -84,7 +85,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
 
   return (
     <div className="w-full glass-card rounded-[3rem] p-4 lg:p-8 border border-white/20 transition-all duration-500 hover:border-white/40 reveal-highlight">
-      <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-2xl video-container mb-8 bg-black/60">
+      <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-2xl video-container mb-8 bg-black/60 group">
         {isInvalidChannel ? (
           <div className="w-full h-full flex flex-col items-center justify-center text-center p-10 bg-slate-900/50">
             <span className="text-6xl mb-4">⚠️</span>
@@ -102,6 +103,16 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
               allowFullScreen
               sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
             ></iframe>
+
+            {/* Overlay for Theater Mode */}
+            <button 
+              onClick={() => onSelectVideo(video)}
+              className="absolute top-4 right-4 z-40 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-md text-white p-3 rounded-2xl border border-white/20 hover:scale-110 active:scale-95 flex items-center gap-2"
+              title="توسيط الفيديو"
+            >
+              <span className="text-sm font-bold">توسيط العرض</span>
+              <span>📺</span>
+            </button>
 
             <div 
               onClick={(e) => handleShieldClick(e, 'settings')}
@@ -205,7 +216,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
             
             <div className="flex gap-4">
               <button onClick={verifyPass} className="flex-1 bg-white text-sky-600 font-black py-4 rounded-[1.5rem] shadow-xl hover:bg-sky-50 transition-colors">تأكيد</button>
-              <button onClick={() => setShowAuthModal(false)} className="flex-1 bg-white/10 font-bold py-4 rounded-[1.5rem] hover:bg-white/20 transition-colors text-white">إغلاق</button>
+              <button onClick={() => setShowAuthModal(false)} className="flex-1 bg-white/10 font-bold py-4 rounded-[1.5rem] hover:bg-white/20 transition-colors text-white">إلغاء</button>
             </div>
           </div>
         </div>
