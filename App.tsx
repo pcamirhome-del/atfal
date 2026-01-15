@@ -19,7 +19,8 @@ const App: React.FC = () => {
     isDarkMode: false,
     soundEnabled: true,
     theme: 'default',
-    defaultQuality: 'hd720'
+    defaultQuality: 'hd720',
+    showParentsTab: false
   });
   const [healthReports, setHealthReports] = useState<HealthCheckReport[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -39,23 +40,10 @@ const App: React.FC = () => {
     if (storedVideos) setVideos(JSON.parse(storedVideos));
     if (storedSaved) setSavedIds(JSON.parse(storedSaved));
     if (storedCats) setCategories(JSON.parse(storedCats));
-    if (storedSettings) setSettings(JSON.parse(storedSettings));
-
-    // Intercept all clicks to prevent external navigation
-    const handleGlobalClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const anchor = target.closest('a');
-      if (anchor && anchor.href) {
-        const url = new URL(anchor.href);
-        if (url.origin !== window.location.origin) {
-          e.preventDefault();
-          alert('عذراً، لا يمكن الخروج من التطبيق للحفاظ على سلامتك. 🛡️');
-        }
-      }
-    };
-
-    document.addEventListener('click', handleGlobalClick);
-    return () => document.removeEventListener('click', handleGlobalClick);
+    if (storedSettings) {
+      const parsed = JSON.parse(storedSettings);
+      setSettings({ ...settings, ...parsed });
+    }
   }, []);
 
   useEffect(() => {
@@ -136,28 +124,29 @@ const App: React.FC = () => {
   };
 
   const getFilteredVideos = () => {
-    let baseVideos = videos;
-    
     if (aiSearchResults !== null) {
       return videos.filter(v => aiSearchResults.includes(v.id));
     }
     
-    if (activeTab === 'home') baseVideos = videos;
-    else if (activeTab === 'saved') baseVideos = videos.filter(v => savedIds.includes(v.id));
-    else baseVideos = videos.filter(v => v.category === activeTab);
-
-    return baseVideos;
+    if (activeTab === 'home') {
+      // Don't show parent videos in home screen unless searched or explicitly marked?
+      // Actually, usually home is "Kids Content". We'll filter out parent videos from home.
+      return videos.filter(v => !v.isParentVideo);
+    }
+    if (activeTab === 'saved') return videos.filter(v => savedIds.includes(v.id));
+    if (activeTab === 'parents-videos') return videos.filter(v => v.isParentVideo);
+    
+    return videos.filter(v => v.category === activeTab);
   };
 
   const suggestedVideos = videos
-    .filter(v => !getFilteredVideos().some(fv => fv.id === v.id))
+    .filter(v => !v.isParentVideo && !getFilteredVideos().some(fv => fv.id === v.id))
     .sort(() => 0.5 - Math.random())
     .slice(0, 3);
 
   return (
     <div className="min-h-screen flex text-white overflow-hidden relative" onClick={() => isSidebarOpen && setIsSidebarOpen(false)}>
       
-      {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[10%] left-[5%] text-6xl animate-float opacity-20">🧸</div>
         <div className="absolute bottom-[10%] right-[5%] text-8xl opacity-10 animate-float" style={{animationDelay: '2s'}}>🌈</div>
@@ -170,12 +159,11 @@ const App: React.FC = () => {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         isDarkMode={settings.isDarkMode}
+        showParentsTab={settings.showParentsTab}
       />
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col mt-20 lg:mt-0 relative z-10 overflow-hidden h-screen">
         
-        {/* Top Header with AI Search */}
         <div className="p-4 lg:p-8 pb-0">
           <SearchBar 
             onSearch={handleAiSearch} 
@@ -204,13 +192,14 @@ const App: React.FC = () => {
               />
             ) : (
               <div className="animate-fade-in space-y-16 pb-20">
-                {/* Main Results */}
                 <section>
                   <header className="mb-10 text-center lg:text-right">
                     <div className="inline-block p-6 rounded-[2.5rem] glass-card border-white/30">
                       <h2 className="text-3xl lg:text-5xl font-black drop-shadow-lg text-white">
                         {aiSearchResults !== null ? 'نتائج البحث الذكي 🔍' : 
                          activeTab === 'home' ? 'عالم أحباب الله الممتع 🏠' : 
+                         activeTab === 'parents-videos' ? 'فيديوهات الوالد 🧔' :
+                         activeTab === 'saved' ? 'المحتوى المحفوظ ⭐' :
                          categories.find(c => c.id === activeTab)?.name || 'القسم المختار'}
                       </h2>
                     </div>
@@ -225,19 +214,18 @@ const App: React.FC = () => {
                           isSaved={savedIds.includes(video.id)}
                           onSave={() => handleSaveVideo(video.id)}
                           allVideos={videos}
-                          onSelectVideo={(v) => { /* Scroll Logic handled in child */ }}
+                          onSelectVideo={(v) => { /* Selection */ }}
                           defaultQuality={settings.defaultQuality}
                         />
                       ))
                     ) : (
                       <div className="glass-card py-24 rounded-[3rem] text-center border-dashed border-white/20">
-                        <p className="text-2xl opacity-60">لم نجد فيديوهات هنا حالياً.. جرب البحث! 🎈</p>
+                        <p className="text-2xl opacity-60">لا يوجد محتوى هنا حالياً..🎈</p>
                       </div>
                     )}
                   </div>
                 </section>
 
-                {/* Home Page Suggestions */}
                 {activeTab === 'home' && suggestedVideos.length > 0 && aiSearchResults === null && (
                   <section className="animate-fade-in">
                     <div className="flex items-center gap-4 mb-8">
@@ -265,7 +253,6 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Mobile Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-20 glass-nav flex items-center justify-between px-8 z-40 border-b border-white/10">
         <button onClick={(e) => { e.stopPropagation(); setIsSidebarOpen(true); }} className="text-3xl">☰</button>
         <span className="font-black text-2xl tracking-tight">أحباب الله</span>

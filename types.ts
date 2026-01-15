@@ -1,5 +1,5 @@
 
-export type CategoryType = 'home' | 'stories' | 'cartoon' | 'educational' | 'songs' | 'saved' | 'settings' | 'admin';
+export type CategoryType = 'home' | 'stories' | 'cartoon' | 'educational' | 'songs' | 'saved' | 'settings' | 'admin' | 'parents-videos';
 export type AppTheme = 'default' | 'forest' | 'candy' | 'galaxy';
 export type VideoQuality = 'auto' | 'hd1080' | 'hd720' | 'large' | 'medium' | 'small' | 'tiny';
 
@@ -11,6 +11,7 @@ export interface Video {
   isBroken?: boolean;
   timestamp: number;
   isChannel?: boolean;
+  isParentVideo?: boolean;
 }
 
 export interface AppSettings {
@@ -18,6 +19,7 @@ export interface AppSettings {
   soundEnabled: boolean;
   theme: AppTheme;
   defaultQuality: VideoQuality;
+  showParentsTab: boolean;
 }
 
 export interface HealthCheckReport {

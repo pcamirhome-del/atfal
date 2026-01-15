@@ -65,7 +65,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
   };
 
   const suggestions = allVideos
-    .filter(v => v.id !== video.id)
+    .filter(v => v.id !== video.id && !v.isParentVideo)
     .sort(() => 0.5 - Math.random())
     .slice(0, 4);
 
@@ -84,7 +84,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
 
   return (
     <div className="w-full glass-card rounded-[3rem] p-4 lg:p-8 border border-white/20 transition-all duration-500 hover:border-white/40">
-      {/* Huge Video Player Container */}
       <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-2xl video-container mb-8 bg-black/60">
         {isInvalidChannel ? (
           <div className="w-full h-full flex flex-col items-center justify-center text-center p-10 bg-slate-900/50">
@@ -104,15 +103,12 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
               sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
             ></iframe>
 
-            {/* INVISIBLE PROTECTION SHIELD */}
-            {/* 1. Bottom Control Bar (Covers Gear icon and YouTube logo) */}
             <div 
               onClick={(e) => handleShieldClick(e, 'settings')}
               className="absolute bottom-0 right-0 w-full h-14 z-30 cursor-pointer bg-transparent"
               title="منطقة محمية - إعدادات يوتيوب"
             />
             
-            {/* 2. Top Bar (Covers 'Watch on YouTube' or context menus) */}
             <div 
               onClick={(e) => handleShieldClick(e, 'exit')}
               className="absolute top-0 left-0 w-full h-16 z-30 cursor-pointer bg-transparent"
@@ -126,30 +122,39 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
         <div className="flex-1">
           <div className="flex items-center gap-4 mb-4">
             <h3 className="text-3xl lg:text-4xl font-black truncate max-w-[80%]">{video.title}</h3>
-            <button 
-              onClick={onSave}
-              className={`p-4 rounded-2xl transition-all ${isSaved ? 'bg-yellow-400 text-slate-900 shadow-xl' : 'bg-white/10'}`}
-            >
-              ⭐
-            </button>
+            {video.isParentVideo && <span className="bg-sky-500 text-white text-[10px] px-2 py-1 rounded-full font-bold">🧔 فيديو الوالد</span>}
           </div>
           
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-bold opacity-50 ml-2">تحكم في الجودة:</span>
-            {qualities.map(q => (
-              <button
-                key={q.id}
-                onClick={() => handleQualityRequest(q.id)}
-                className={`px-3 py-2 rounded-xl text-[10px] font-bold transition-all ${currentQuality === q.id ? 'bg-sky-500 text-white shadow-lg' : 'bg-white/5 hover:bg-white/20 border border-white/10'}`}
-              >
-                {q.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-bold opacity-50 ml-2">الجودة:</span>
+              {qualities.map(q => (
+                <button
+                  key={q.id}
+                  onClick={() => handleQualityRequest(q.id)}
+                  className={`px-3 py-2 rounded-xl text-[10px] font-bold transition-all ${currentQuality === q.id ? 'bg-sky-500 text-white shadow-lg' : 'bg-white/5 hover:bg-white/20 border border-white/10'}`}
+                >
+                  {q.label}
+                </button>
+              ))}
+            </div>
+            
+            <div className="h-8 w-px bg-white/10 mx-2 hidden md:block"></div>
+            
+            <button 
+              onClick={onSave}
+              className={`flex items-center gap-2 px-6 py-2 rounded-xl font-bold transition-all border-2
+                ${isSaved 
+                  ? 'bg-yellow-400 border-yellow-300 text-slate-900 shadow-xl scale-105' 
+                  : 'bg-white/5 border-white/10 hover:bg-white/10 text-white'}`}
+            >
+              <span>{isSaved ? 'تم الحفظ' : 'حفظ الفيدو'}</span>
+              <span className="text-lg">{isSaved ? '✅' : '⭐'}</span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Suggestions Row */}
       {suggestions.length > 0 && (
         <div className="mt-12 pt-8 border-t border-white/10">
           <h4 className="text-xl font-bold mb-6 flex items-center gap-3">
@@ -176,7 +181,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
         </div>
       )}
 
-      {/* Parental Auth Modal */}
       {showAuthModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-xl p-6" onClick={(e) => e.stopPropagation()}>
           <div className="glass-card p-12 rounded-[3.5rem] w-full max-w-sm text-center border-white/30 animate-scale-up shadow-[0_0_50px_rgba(0,0,0,0.5)]">

@@ -9,13 +9,15 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   isDarkMode: boolean;
+  showParentsTab?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, categories, isOpen, onClose, isDarkMode }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, categories, isOpen, onClose, isDarkMode, showParentsTab }) => {
   const menuItems = [
     { id: 'home', name: 'الرئيسية', icon: '🏠' },
     ...categories,
     { id: 'saved', name: 'المحتوى المحفوظ', icon: '⭐' },
+    ...(showParentsTab ? [{ id: 'parents-videos', name: 'فيديوهات الوالد', icon: '🧔' }] : []),
     { id: 'settings', name: 'الإعدادات', icon: '⚙️' },
     { id: 'admin', name: 'لوحة التحكم', icon: '🔐' },
   ];
@@ -28,7 +30,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, categories, i
       glass-nav border-l border-white/10 shadow-2xl overflow-hidden
     `}>
       <div className="p-4 h-full flex flex-col">
-        {/* Header - Very Compact */}
         <div className="flex items-center gap-3 mb-6 px-1 mt-2">
           <div className="w-10 h-10 bg-white/10 rounded-[1rem] flex items-center justify-center text-2xl shadow-xl border border-white/20 animate-float">
             🎨
@@ -39,7 +40,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, categories, i
           </div>
         </div>
 
-        {/* Navigation - Ultra Compact */}
         <nav className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar-hide flex flex-col justify-start">
           {menuItems.map((item) => (
             <button

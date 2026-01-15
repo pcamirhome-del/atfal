@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { AppSettings, AppTheme, VideoQuality } from '../types';
 
 interface SettingsProps {
@@ -8,6 +8,10 @@ interface SettingsProps {
 }
 
 const Settings: React.FC<SettingsProps> = ({ settings, onUpdateSettings }) => {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pass, setPass] = useState('');
+  const [error, setError] = useState(false);
+
   const themes: { id: AppTheme; name: string; icon: string }[] = [
     { id: 'default', name: 'الزجاجي', icon: '🌊' },
     { id: 'forest', name: 'الغابة', icon: '🌲' },
@@ -24,6 +28,21 @@ const Settings: React.FC<SettingsProps> = ({ settings, onUpdateSettings }) => {
     { id: 'tiny', label: '144p التوفير القصوى' },
     { id: 'auto', label: 'تلقائي' },
   ];
+
+  const handleToggleParentsTab = () => {
+    setShowAuthModal(true);
+    setPass('');
+    setError(false);
+  };
+
+  const verifyPass = () => {
+    if (pass === 'admin') {
+      onUpdateSettings(p => ({ ...p, showParentsTab: !p.showParentsTab }));
+      setShowAuthModal(false);
+    } else {
+      setError(true);
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto py-10 animate-fade-in space-y-10">
@@ -57,11 +76,11 @@ const Settings: React.FC<SettingsProps> = ({ settings, onUpdateSettings }) => {
           </div>
         </div>
 
-        <div className="glass-card p-10 rounded-[3rem]">
+        <div className="glass-card p-10 rounded-[3rem] flex flex-col">
           <h3 className="text-2xl font-black mb-8 flex items-center gap-3">
             <span>🎨</span> ألوان برنامجي
           </h3>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-6 flex-1">
             {themes.map(t => (
               <button
                 key={t.id}
@@ -80,26 +99,75 @@ const Settings: React.FC<SettingsProps> = ({ settings, onUpdateSettings }) => {
         </div>
       </div>
 
-      <div className="glass-card p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 border-white/10">
-        <div>
-          <h4 className="text-xl font-bold">الوضع الليلي والمؤثرات</h4>
-          <p className="text-sm opacity-50">تحكم في الأصوات وإضاءة الشاشة</p>
-        </div>
-        <div className="flex gap-4">
+      <div className="glass-card p-8 rounded-[2.5rem] space-y-6 border-white/10">
+        <h3 className="text-2xl font-black flex items-center gap-3">
+          <span>🛡️</span> الرقابة الأبوية والمؤثرات
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <button 
+            onClick={handleToggleParentsTab}
+            className={`flex flex-col items-center justify-center p-6 rounded-3xl font-bold transition-all border-2
+              ${settings.showParentsTab ? 'bg-sky-500 border-white shadow-lg' : 'bg-white/5 border-white/10 opacity-60 hover:opacity-100'}
+            `}
+          >
+            <span className="text-3xl mb-2">🧔</span>
+            <span>فيديوهات الوالد</span>
+            <span className="text-[10px] mt-1">{settings.showParentsTab ? 'ظاهرة' : 'مخفية'}</span>
+          </button>
+
           <button 
             onClick={() => onUpdateSettings(p => ({ ...p, isDarkMode: !p.isDarkMode }))}
-            className={`px-8 py-4 rounded-2xl font-bold transition-all ${settings.isDarkMode ? 'bg-sky-500 text-white' : 'bg-white/10'}`}
+            className={`flex flex-col items-center justify-center p-6 rounded-3xl font-bold transition-all border-2
+              ${settings.isDarkMode ? 'bg-indigo-500 border-white shadow-lg' : 'bg-white/5 border-white/10 opacity-60 hover:opacity-100'}
+            `}
           >
-            الوضع الليلي {settings.isDarkMode ? 'قيد التشغيل' : 'مغلق'}
+            <span className="text-3xl mb-2">{settings.isDarkMode ? '🌙' : '☀️'}</span>
+            <span>الوضع الليلي</span>
+            <span className="text-[10px] mt-1">{settings.isDarkMode ? 'قيد التشغيل' : 'مغلق'}</span>
           </button>
+
           <button 
             onClick={() => onUpdateSettings(p => ({ ...p, soundEnabled: !p.soundEnabled }))}
-            className={`px-8 py-4 rounded-2xl font-bold transition-all ${settings.soundEnabled ? 'bg-green-500 text-white' : 'bg-white/10'}`}
+            className={`flex flex-col items-center justify-center p-6 rounded-3xl font-bold transition-all border-2
+              ${settings.soundEnabled ? 'bg-green-500 border-white shadow-lg' : 'bg-white/5 border-white/10 opacity-60 hover:opacity-100'}
+            `}
           >
-            الأصوات {settings.soundEnabled ? 'مفعلة' : 'صامت'}
+            <span className="text-3xl mb-2">{settings.soundEnabled ? '🔊' : '🔇'}</span>
+            <span>الأصوات</span>
+            <span className="text-[10px] mt-1">{settings.soundEnabled ? 'مفعلة' : 'صامت'}</span>
           </button>
         </div>
       </div>
+
+      {/* Parental Auth Modal for Settings Toggle */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-xl p-6">
+          <div className="glass-card p-12 rounded-[3.5rem] w-full max-w-sm text-center border-white/30 animate-scale-up shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <div className="text-6xl mb-6">🔐</div>
+            <h3 className="text-2xl font-black mb-2">إذن الوالدين</h3>
+            <p className="text-sm opacity-60 mb-8 leading-relaxed">
+              يجب إدخال كلمة السر لتعديل إعدادات الظهور الأبوية.
+            </p>
+            
+            <input 
+              type="password" 
+              placeholder="كلمة السر"
+              className="w-full bg-white/10 border border-white/20 p-5 rounded-[2rem] mb-4 text-center text-white outline-none focus:bg-white/20 text-lg tracking-widest"
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && verifyPass()}
+            />
+            {error && <p className="text-red-400 text-xs mb-4 font-bold">كلمة السر خاطئة!</p>}
+            
+            <div className="flex gap-4">
+              <button onClick={verifyPass} className="flex-1 bg-white text-sky-600 font-black py-4 rounded-[1.5rem] shadow-xl hover:bg-sky-50 transition-colors">تأكيد</button>
+              <button onClick={() => setShowAuthModal(false)} className="flex-1 bg-white/10 font-bold py-4 rounded-[1.5rem] hover:bg-white/20 transition-colors text-white">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
