@@ -25,12 +25,12 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
   }, [defaultQuality]);
 
   const qualities: { id: VideoQuality; label: string }[] = [
-    { id: 'hd1080', label: '1080p (ممتازة)' },
-    { id: 'hd720', label: '720p (عالية)' },
-    { id: 'large', label: '480p (متوسطة)' },
-    { id: 'medium', label: '360p (عادية)' },
-    { id: 'small', label: '240p (منخفضة)' },
-    { id: 'tiny', label: '144p (توفير)' },
+    { id: 'hd1080', label: '1080p' },
+    { id: 'hd720', label: '720p' },
+    { id: 'large', label: '480p' },
+    { id: 'medium', label: '360p' },
+    { id: 'small', label: '240p' },
+    { id: 'tiny', label: '144p' },
     { id: 'auto', label: 'تلقائي' },
   ];
 
@@ -54,8 +54,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
     if (pass === 'admin') {
       if (authReason === 'quality' && pendingQuality) {
         setCurrentQuality(pendingQuality);
-      } else if (authReason === 'exit' || authReason === 'settings') {
-        alert('تم السماح بالوصول مؤقتاً.. يرجى الحذر.');
+      } else {
+        alert('تم فك القفل مؤقتاً.. يمكنك الآن التحكم.');
       }
       setShowAuthModal(false);
       setPendingQuality(null);
@@ -69,35 +69,57 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
     .sort(() => 0.5 - Math.random())
     .slice(0, 4);
 
-  const embedUrl = `${getEmbedUrl(video.url)}?vq=${currentQuality}&rel=0&showinfo=0&modestbranding=1&iv_load_policy=3&disablekb=1&enablejsapi=1&origin=${window.location.origin}`;
+  const embedBase = getEmbedUrl(video.url);
+  const isInvalidChannel = embedBase === 'INVALID_CHANNEL_EMBED';
+  
+  const embedUrl = isInvalidChannel 
+    ? '' 
+    : `${embedBase}?vq=${currentQuality}&rel=0&showinfo=0&modestbranding=1&iv_load_policy=3&disablekb=1&enablejsapi=1&origin=${window.location.origin}`;
 
   const getYoutubeThumb = (url: string) => {
     const id = url.split('v=')[1]?.split('&')[0];
     if (id) return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
-    return 'https://via.placeholder.com/320x180?text=Video';
+    return 'https://via.placeholder.com/320x180?text=أحباب+الله';
   };
 
   return (
     <div className="w-full glass-card rounded-[3rem] p-4 lg:p-8 border border-white/20 transition-all duration-500 hover:border-white/40">
       {/* Huge Video Player Container */}
-      <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-2xl video-container mb-8 bg-black/40">
-        <iframe
-          src={embedUrl}
-          className="w-full h-full"
-          title={video.title}
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
-        ></iframe>
+      <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-2xl video-container mb-8 bg-black/60">
+        {isInvalidChannel ? (
+          <div className="w-full h-full flex flex-col items-center justify-center text-center p-10 bg-slate-900/50">
+            <span className="text-6xl mb-4">⚠️</span>
+            <h4 className="text-2xl font-black mb-2">عذراً، لا يمكن عرض القناة مباشرة</h4>
+            <p className="opacity-60 max-w-md">يرجى إضافة رابط قائمة تشغيل (Playlist) لضمان عملها بشكل صحيح.</p>
+          </div>
+        ) : (
+          <>
+            <iframe
+              src={embedUrl}
+              className="w-full h-full"
+              title={video.title}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+            ></iframe>
 
-        {/* INVISIBLE SHIELD: Intercepts clicks on the YouTube logo and Settings Gear */}
-        {/* Covering the bottom right controls bar where gear icon and logo reside */}
-        <div 
-          onClick={(e) => handleShieldClick(e, 'settings')}
-          className="absolute bottom-0 right-0 w-48 h-16 z-30 cursor-pointer bg-transparent"
-          title="منطقة محمية - تتطلب كلمة سر"
-        />
+            {/* INVISIBLE PROTECTION SHIELD */}
+            {/* 1. Bottom Control Bar (Covers Gear icon and YouTube logo) */}
+            <div 
+              onClick={(e) => handleShieldClick(e, 'settings')}
+              className="absolute bottom-0 right-0 w-full h-14 z-30 cursor-pointer bg-transparent"
+              title="منطقة محمية - إعدادات يوتيوب"
+            />
+            
+            {/* 2. Top Bar (Covers 'Watch on YouTube' or context menus) */}
+            <div 
+              onClick={(e) => handleShieldClick(e, 'exit')}
+              className="absolute top-0 left-0 w-full h-16 z-30 cursor-pointer bg-transparent"
+              title="منطقة محمية - الخروج من التطبيق"
+            />
+          </>
+        )}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start justify-between">
@@ -112,13 +134,13 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
             </button>
           </div>
           
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-bold opacity-50 ml-2">جودة العرض:</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-bold opacity-50 ml-2">تحكم في الجودة:</span>
             {qualities.map(q => (
               <button
                 key={q.id}
                 onClick={() => handleQualityRequest(q.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${currentQuality === q.id ? 'bg-sky-500 text-white' : 'bg-white/5 hover:bg-white/20 border border-white/10'}`}
+                className={`px-3 py-2 rounded-xl text-[10px] font-bold transition-all ${currentQuality === q.id ? 'bg-sky-500 text-white shadow-lg' : 'bg-white/5 hover:bg-white/20 border border-white/10'}`}
               >
                 {q.label}
               </button>
@@ -127,58 +149,63 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
         </div>
       </div>
 
-      {/* Suggestions Row Below Video */}
-      <div className="mt-12 pt-8 border-t border-white/10">
-        <h4 className="text-xl font-bold mb-6 flex items-center gap-3">
-          <span>🍪</span> فيديوهات قد تحبها
-        </h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {suggestions.map(v => (
-            <button
-              key={`suggest-${v.id}`}
-              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); onSelectVideo(v); }}
-              className="glass-card p-4 rounded-[2rem] text-right transition-all hover:scale-[1.05] border border-white/5 group bg-white/5 hover:bg-white/10"
-            >
-              <div className="aspect-video bg-white/5 rounded-2xl mb-3 overflow-hidden shadow-lg border border-white/10">
-                <img 
-                  src={getYoutubeThumb(v.url)} 
-                  alt={v.title}
-                  className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
-                />
-              </div>
-              <p className="text-xs font-bold truncate tracking-tight">{v.title}</p>
-            </button>
-          ))}
+      {/* Suggestions Row */}
+      {suggestions.length > 0 && (
+        <div className="mt-12 pt-8 border-t border-white/10">
+          <h4 className="text-xl font-bold mb-6 flex items-center gap-3">
+            <span>🍪</span> اقتراحات ذكية لك
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {suggestions.map(v => (
+              <button
+                key={`suggest-${v.id}`}
+                onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); onSelectVideo(v); }}
+                className="glass-card p-4 rounded-[2rem] text-right transition-all hover:scale-[1.05] border border-white/5 group bg-white/5 hover:bg-white/10"
+              >
+                <div className="aspect-video bg-white/5 rounded-2xl mb-3 overflow-hidden shadow-lg border border-white/10">
+                  <img 
+                    src={getYoutubeThumb(v.url)} 
+                    alt={v.title}
+                    className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                  />
+                </div>
+                <p className="text-[10px] font-bold truncate tracking-tight">{v.title}</p>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Parental Auth Modal */}
       {showAuthModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-6" onClick={(e) => e.stopPropagation()}>
-          <div className="glass-card p-12 rounded-[3.5rem] w-full max-w-sm text-center border-white/30 animate-scale-up">
-            <div className="text-6xl mb-6">{authReason === 'quality' || authReason === 'settings' ? '👧👦' : '🛡️'}</div>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-xl p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="glass-card p-12 rounded-[3.5rem] w-full max-w-sm text-center border-white/30 animate-scale-up shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <div className="text-6xl mb-6">{authReason === 'exit' ? '🛡️' : '🔐'}</div>
             <h3 className="text-2xl font-black mb-2">
               {authReason === 'exit' ? 'حماية أحباب الله' : 'استأذن من والديك'}
             </h3>
-            <p className="text-sm opacity-60 mb-8">
-              {authReason === 'quality' || authReason === 'settings' 
-                ? 'يجب إدخال كلمة السر للتحكم في الجودة أو الإعدادات' 
-                : 'يمنع الخروج لموقع يوتيوب نهائياً.. أدخل رمز المسؤول للتأكيد.'}
+            <p className="text-sm opacity-60 mb-8 leading-relaxed">
+              {authReason === 'exit' 
+                ? 'يمنع الخروج لموقع يوتيوب نهائياً. أدخل رمز المسؤول للمتابعة.' 
+                : authReason === 'settings' 
+                ? 'يجب إدخال كلمة السر لفتح إعدادات المشغل والترس.' 
+                : 'يجب إدخال كلمة السر للتحكم في الجودة أو إعدادات المشغل.'}
             </p>
             
             <input 
               type="password" 
-              placeholder="أدخل كلمة السر"
-              className="w-full bg-white/10 border border-white/20 p-5 rounded-[2rem] mb-4 text-center text-white outline-none focus:bg-white/20"
+              placeholder="admin / admin"
+              className="w-full bg-white/10 border border-white/20 p-5 rounded-[2rem] mb-4 text-center text-white outline-none focus:bg-white/20 text-lg tracking-widest"
               value={pass}
               onChange={(e) => setPass(e.target.value)}
               autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && verifyPass()}
             />
-            {error && <p className="text-red-400 text-xs mb-4 font-bold">كلمة السر خاطئة يا بطل!</p>}
+            {error && <p className="text-red-400 text-xs mb-4 font-bold">كلمة السر خاطئة.. حاول مرة أخرى!</p>}
             
             <div className="flex gap-4">
-              <button onClick={verifyPass} className="flex-1 bg-white text-sky-600 font-black py-4 rounded-[1.5rem] shadow-xl hover:bg-sky-50">تأكيد</button>
-              <button onClick={() => setShowAuthModal(false)} className="flex-1 bg-white/10 font-bold py-4 rounded-[1.5rem] hover:bg-white/20">إغلاق</button>
+              <button onClick={verifyPass} className="flex-1 bg-white text-sky-600 font-black py-4 rounded-[1.5rem] shadow-xl hover:bg-sky-50 transition-colors">تأكيد</button>
+              <button onClick={() => setShowAuthModal(false)} className="flex-1 bg-white/10 font-bold py-4 rounded-[1.5rem] hover:bg-white/20 transition-colors text-white">إغلاق</button>
             </div>
           </div>
         </div>

@@ -23,9 +23,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [videoTitle, setVideoTitle] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [videoCategory, setVideoCategory] = useState(categories[0]?.id || '');
-  const [newCatName, setNewCatName] = useState('');
   
-  // YouTube Channel Support
   const [channelUrl, setChannelUrl] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
@@ -41,15 +39,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleAddChannel = (e: React.FormEvent) => {
     e.preventDefault();
     if (!channelUrl) return;
-    // For the UI simulation, we add it as a special "Channel" record
+    
+    // Warn if it's a direct channel link
+    if (channelUrl.includes('@') && !channelUrl.includes('list=')) {
+      alert('تنبيه: روابط القنوات المباشرة (@handle) يمنعها يوتيوب من العرض. الأفضل استخدام رابط (Playlist) للقناة لضمان عملها بشكل صحيح.');
+    }
+
     onAddVideo({ 
-      title: `قناة: ${channelUrl.split('/').pop()}`, 
+      title: `قناة: ${channelUrl.split('/').pop()?.replace('@', '')}`, 
       url: channelUrl, 
       category: videoCategory,
       isChannel: true 
     });
     setChannelUrl('');
-    alert('تم ربط القناة بنجاح! سيتم عرض فيديوهات القناة في القسم المحدد.');
+    alert('تمت إضافة الرابط! تأكد من أنه رابط قائمة تشغيل (Playlist) ليعمل بامتياز.');
   };
 
   if (!isLoggedIn) {
@@ -80,31 +83,39 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Regular Video Form */}
         <div className="glass-card p-10 rounded-[2.5rem] border border-white/20">
-          <h3 className="text-2xl font-black mb-8">✨ إضافة فيديو جديد</h3>
+          <h3 className="text-2xl font-black mb-8 flex items-center gap-3">
+            <span>✨</span> إضافة فيديو جديد
+          </h3>
           <form onSubmit={(e) => {
             e.preventDefault();
             onAddVideo({ title: videoTitle, url: videoUrl, category: videoCategory });
             setVideoTitle(''); setVideoUrl('');
           }} className="space-y-6">
-            <input required className="w-full bg-white/10 p-4 rounded-2xl border border-white/10 outline-none" value={videoTitle} onChange={(e) => setVideoTitle(e.target.value)} placeholder="عنوان الفيديو" />
-            <input required className="w-full bg-white/10 p-4 rounded-2xl border border-white/10 outline-none" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="رابط يوتيوب" />
+            <input required className="w-full bg-white/10 p-4 rounded-2xl border border-white/10 outline-none focus:bg-white/20" value={videoTitle} onChange={(e) => setVideoTitle(e.target.value)} placeholder="عنوان الفيديو (مثلاً: سبايدر مان يحب الفاكهة)" />
+            <input required className="w-full bg-white/10 p-4 rounded-2xl border border-white/10 outline-none focus:bg-white/20" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="رابط الفيديو من يوتيوب" />
             <select className="w-full bg-white/10 p-4 rounded-2xl border border-white/10 outline-none text-slate-800" value={videoCategory} onChange={(e) => setVideoCategory(e.target.value)}>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-            <button className="w-full bg-green-500 font-black py-4 rounded-2xl shadow-lg">نشر الآن</button>
+            <button className="w-full bg-green-500 hover:bg-green-400 text-white font-black py-4 rounded-2xl shadow-lg transition-colors">نشر الفيديو الآن 🚀</button>
           </form>
         </div>
 
         {/* YouTube Channel Support */}
         <div className="glass-card p-10 rounded-[2.5rem] border border-white/20">
-          <h3 className="text-2xl font-black mb-8">📺 ربط قناة يوتيوب</h3>
-          <p className="text-sm opacity-60 mb-6">سيتم جلب جميع فيديوهات القناة تلقائياً وعرضها في التطبيق.</p>
+          <h3 className="text-2xl font-black mb-6 flex items-center gap-3">
+            <span>📺</span> ربط مجموعة فيديوهات (قناة)
+          </h3>
+          <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-2xl mb-6">
+            <p className="text-[11px] text-yellow-200 leading-relaxed">
+              <strong>💡 نصيحة تقنية:</strong> يوتيوب يرفض عرض القنوات المباشرة داخل المواقع الأخرى. لضمان عرض "كل الفيديوهات"، يرجى وضع رابط <strong>قائمة تشغيل (Playlist)</strong> من القناة المطلوبة.
+            </p>
+          </div>
           <form onSubmit={handleAddChannel} className="space-y-6">
-            <input required className="w-full bg-white/10 p-4 rounded-2xl border border-white/10 outline-none" value={channelUrl} onChange={(e) => setChannelUrl(e.target.value)} placeholder="رابط القناة (مثل: youtube.com/@channel)" />
+            <input required className="w-full bg-white/10 p-4 rounded-2xl border border-white/10 outline-none focus:bg-white/20" value={channelUrl} onChange={(e) => setChannelUrl(e.target.value)} placeholder="رابط قائمة التشغيل (Playlist URL)" />
             <select className="w-full bg-white/10 p-4 rounded-2xl border border-white/10 outline-none text-slate-800" value={videoCategory} onChange={(e) => setVideoCategory(e.target.value)}>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-            <button className="w-full bg-red-500 font-black py-4 rounded-2xl shadow-lg">ربط القناة الآن</button>
+            <button className="w-full bg-red-500 hover:bg-red-400 text-white font-black py-4 rounded-2xl shadow-lg transition-colors">ربط القائمة الآن 🔗</button>
           </form>
         </div>
       </div>
@@ -112,15 +123,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
       <div className="glass-card rounded-[2.5rem] p-10 overflow-hidden">
         <h3 className="text-2xl font-bold mb-6">إدارة المحتوى ({videos.length})</h3>
         <div className="space-y-3">
-          {videos.map(v => (
-            <div key={v.id} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl hover:bg-white/10 border border-white/5 transition-all">
-              <div>
-                <span className="font-bold">{v.title}</span>
-                {v.isChannel && <span className="mr-2 px-2 py-0.5 bg-red-500/20 text-red-300 text-[10px] rounded-full uppercase">Channel</span>}
+          {videos.length === 0 ? (
+            <div className="text-center py-10 opacity-40">لا توجد فيديوهات حالياً</div>
+          ) : (
+            videos.map(v => (
+              <div key={v.id} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl hover:bg-white/10 border border-white/5 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-xl">
+                    {v.isChannel ? '📺' : '🎥'}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-sm truncate max-w-[200px]">{v.title}</span>
+                    <span className="text-[10px] opacity-40">{categories.find(c => c.id === v.category)?.name}</span>
+                  </div>
+                </div>
+                <button onClick={() => onDeleteVideo(v.id)} className="text-red-400 hover:text-red-100 font-bold px-4 py-2 hover:bg-red-500/20 rounded-xl transition-all">حذف 🗑️</button>
               </div>
-              <button onClick={() => onDeleteVideo(v.id)} className="text-red-400 hover:text-red-600 font-bold px-4 py-2 hover:bg-white/5 rounded-xl">حذف 🗑️</button>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
