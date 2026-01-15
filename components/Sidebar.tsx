@@ -23,12 +23,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, categories, i
   ];
 
   return (
-    <aside className={`
-      fixed lg:sticky top-0 right-0 h-screen w-[260px] z-50
-      transform transition-all duration-700 ease-in-out
-      ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
-      glass-nav border-l border-white/10 shadow-2xl overflow-hidden
-    `}>
+    <aside 
+      onClick={(e) => e.stopPropagation()}
+      className={`
+        fixed lg:sticky top-0 right-0 h-screen w-[260px] z-50
+        transform transition-all duration-700 ease-in-out
+        ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+        glass-nav border-l border-white/10 shadow-2xl overflow-hidden
+      `}
+    >
       <div className="p-4 h-full flex flex-col">
         <div className="flex items-center gap-3 mb-6 px-1 mt-2">
           <div className="w-10 h-10 bg-white/10 rounded-[1rem] flex items-center justify-center text-2xl shadow-xl border border-white/20 animate-float">

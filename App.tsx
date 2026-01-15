@@ -44,6 +44,15 @@ const App: React.FC = () => {
       const parsed = JSON.parse(storedSettings);
       setSettings({ ...settings, ...parsed });
     }
+
+    // Global Mouse Listener for Reveal Highlight
+    const handleMouseMove = (e: MouseEvent) => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   useEffect(() => {
@@ -129,8 +138,6 @@ const App: React.FC = () => {
     }
     
     if (activeTab === 'home') {
-      // Don't show parent videos in home screen unless searched or explicitly marked?
-      // Actually, usually home is "Kids Content". We'll filter out parent videos from home.
       return videos.filter(v => !v.isParentVideo);
     }
     if (activeTab === 'saved') return videos.filter(v => savedIds.includes(v.id));
@@ -144,8 +151,17 @@ const App: React.FC = () => {
     .sort(() => 0.5 - Math.random())
     .slice(0, 3);
 
+  const handleGlobalClick = () => {
+    if (isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex text-white overflow-hidden relative" onClick={() => isSidebarOpen && setIsSidebarOpen(false)}>
+    <div 
+      className="min-h-screen flex text-white overflow-hidden relative"
+      onClick={handleGlobalClick}
+    >
       
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[10%] left-[5%] text-6xl animate-float opacity-20">🧸</div>
@@ -194,7 +210,7 @@ const App: React.FC = () => {
               <div className="animate-fade-in space-y-16 pb-20">
                 <section>
                   <header className="mb-10 text-center lg:text-right">
-                    <div className="inline-block p-6 rounded-[2.5rem] glass-card border-white/30">
+                    <div className="inline-block p-6 rounded-[2.5rem] glass-card border-white/30 reveal-highlight">
                       <h2 className="text-3xl lg:text-5xl font-black drop-shadow-lg text-white">
                         {aiSearchResults !== null ? 'نتائج البحث الذكي 🔍' : 
                          activeTab === 'home' ? 'عالم أحباب الله الممتع 🏠' : 
@@ -205,7 +221,7 @@ const App: React.FC = () => {
                     </div>
                   </header>
 
-                  <div className="flex flex-col gap-16">
+                  <div className={`${settings.theme === 'grid_modern' ? 'video-grid' : 'flex flex-col gap-16'}`}>
                     {getFilteredVideos().length > 0 ? (
                       getFilteredVideos().map(video => (
                         <VideoCard 
