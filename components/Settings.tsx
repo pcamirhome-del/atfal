@@ -20,6 +20,8 @@ const Settings: React.FC<SettingsProps> = ({ settings, onUpdateSettings }) => {
     { id: 'hd720', label: '720p العالية' },
     { id: 'large', label: '480p المتوسطة' },
     { id: 'medium', label: '360p العادية' },
+    { id: 'small', label: '240p المنخفضة' },
+    { id: 'tiny', label: '144p التوفير القصوى' },
     { id: 'auto', label: 'تلقائي' },
   ];
 

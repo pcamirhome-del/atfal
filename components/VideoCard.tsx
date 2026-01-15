@@ -15,7 +15,7 @@ interface VideoCardProps {
 const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos, onSelectVideo, defaultQuality }) => {
   const [currentQuality, setCurrentQuality] = useState<VideoQuality>(defaultQuality);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authReason, setAuthReason] = useState<'quality' | 'exit'>('quality');
+  const [authReason, setAuthReason] = useState<'quality' | 'exit' | 'settings'>('quality');
   const [pendingQuality, setPendingQuality] = useState<VideoQuality | null>(null);
   const [pass, setPass] = useState('');
   const [error, setError] = useState(false);
@@ -29,6 +29,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
     { id: 'hd720', label: '720p (عالية)' },
     { id: 'large', label: '480p (متوسطة)' },
     { id: 'medium', label: '360p (عادية)' },
+    { id: 'small', label: '240p (منخفضة)' },
+    { id: 'tiny', label: '144p (توفير)' },
     { id: 'auto', label: 'تلقائي' },
   ];
 
@@ -40,9 +42,9 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
     setError(false);
   };
 
-  const handleExitAttempt = (e: React.MouseEvent) => {
+  const handleShieldClick = (e: React.MouseEvent, reason: 'exit' | 'settings') => {
     e.stopPropagation();
-    setAuthReason('exit');
+    setAuthReason(reason);
     setShowAuthModal(true);
     setPass('');
     setError(false);
@@ -52,8 +54,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
     if (pass === 'admin') {
       if (authReason === 'quality' && pendingQuality) {
         setCurrentQuality(pendingQuality);
-      } else if (authReason === 'exit') {
-        alert('تم فك القفل مؤقتاً.. ولكن يمنع الخروج التلقائي للحماية.');
+      } else if (authReason === 'exit' || authReason === 'settings') {
+        alert('تم السماح بالوصول مؤقتاً.. يرجى الحذر.');
       }
       setShowAuthModal(false);
       setPendingQuality(null);
@@ -86,15 +88,15 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
-          // Using sandbox to block standard popups and navigation from within the iframe
           sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
         ></iframe>
 
-        {/* INVISIBLE SHIELD: Intercepts clicks on the YouTube logo (usually bottom right) */}
+        {/* INVISIBLE SHIELD: Intercepts clicks on the YouTube logo and Settings Gear */}
+        {/* Covering the bottom right controls bar where gear icon and logo reside */}
         <div 
-          onClick={handleExitAttempt}
-          className="absolute bottom-1 right-1 w-32 h-16 z-30 cursor-pointer bg-transparent"
-          title="محمي ضد الخروج"
+          onClick={(e) => handleShieldClick(e, 'settings')}
+          className="absolute bottom-0 right-0 w-48 h-16 z-30 cursor-pointer bg-transparent"
+          title="منطقة محمية - تتطلب كلمة سر"
         />
       </div>
 
@@ -154,12 +156,14 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos
       {showAuthModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-6" onClick={(e) => e.stopPropagation()}>
           <div className="glass-card p-12 rounded-[3.5rem] w-full max-w-sm text-center border-white/30 animate-scale-up">
-            <div className="text-6xl mb-6">{authReason === 'quality' ? '👧👦' : '🛡️'}</div>
+            <div className="text-6xl mb-6">{authReason === 'quality' || authReason === 'settings' ? '👧👦' : '🛡️'}</div>
             <h3 className="text-2xl font-black mb-2">
-              {authReason === 'quality' ? 'استأذن من والديك' : 'حماية أحباب الله'}
+              {authReason === 'exit' ? 'حماية أحباب الله' : 'استأذن من والديك'}
             </h3>
             <p className="text-sm opacity-60 mb-8">
-              {authReason === 'quality' ? 'يجب إدخال كلمة السر لتغيير الجودة' : 'يمنع الخروج لموقع يوتيوب نهائياً.. أدخل رمز المسؤول للتأكيد.'}
+              {authReason === 'quality' || authReason === 'settings' 
+                ? 'يجب إدخال كلمة السر للتحكم في الجودة أو الإعدادات' 
+                : 'يمنع الخروج لموقع يوتيوب نهائياً.. أدخل رمز المسؤول للتأكيد.'}
             </p>
             
             <input 
