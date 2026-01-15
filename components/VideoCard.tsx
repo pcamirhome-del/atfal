@@ -1,57 +1,156 @@
 
-import React, { useState } from 'react';
-import { Video } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Video, VideoQuality } from '../types';
 import { getEmbedUrl } from '../services/videoService';
 
 interface VideoCardProps {
   video: Video;
   isSaved: boolean;
   onSave: () => void;
-  onReportError: (error: string) => void;
+  allVideos: Video[];
+  onSelectVideo: (v: Video) => void;
+  defaultQuality: VideoQuality;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, onReportError }) => {
-  const [hasError, setHasError] = useState(false);
-  const embedUrl = getEmbedUrl(video.url);
+const VideoCard: React.FC<VideoCardProps> = ({ video, isSaved, onSave, allVideos, onSelectVideo, defaultQuality }) => {
+  const [currentQuality, setCurrentQuality] = useState<VideoQuality>(defaultQuality);
+  const [showQualityModal, setShowQualityModal] = useState(false);
+  const [pendingQuality, setPendingQuality] = useState<VideoQuality | null>(null);
+  const [pass, setPass] = useState('');
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    setCurrentQuality(defaultQuality);
+  }, [defaultQuality]);
+
+  const qualities: { id: VideoQuality; label: string }[] = [
+    { id: 'hd1080', label: '1080p (ممتازة)' },
+    { id: 'hd720', label: '720p (عالية)' },
+    { id: 'large', label: '480p (متوسطة)' },
+    { id: 'medium', label: '360p (عادية)' },
+    { id: 'auto', label: 'تلقائي' },
+  ];
+
+  const handleQualityRequest = (q: VideoQuality) => {
+    setPendingQuality(q);
+    setShowQualityModal(true);
+    setPass('');
+    setError(false);
+  };
+
+  const verifyPass = () => {
+    if (pass === 'admin') {
+      if (pendingQuality) setCurrentQuality(pendingQuality);
+      setShowQualityModal(false);
+      setPendingQuality(null);
+    } else {
+      setError(true);
+    }
+  };
+
+  const suggestions = allVideos
+    .filter(v => v.id !== video.id)
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 4);
+
+  const embedUrl = `${getEmbedUrl(video.url)}?vq=${currentQuality}&rel=0&showinfo=0&modestbranding=1&iv_load_policy=3&disablekb=1`;
+
+  const getYoutubeThumb = (url: string) => {
+    const id = url.split('v=')[1]?.split('&')[0];
+    if (id) return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+    return 'https://via.placeholder.com/320x180?text=Video';
+  };
 
   return (
-    <div className="glass-card rounded-[2rem] overflow-hidden group transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl border border-white/20">
-      <div className="relative aspect-video">
-        {!hasError ? (
-          <iframe
-            src={embedUrl}
-            className="w-full h-full"
-            title={video.title}
-            frameBorder="0"
-            allowFullScreen
-            onError={() => setHasError(true)}
-          ></iframe>
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-black/20">
-            <span className="text-4xl mb-2">🎈</span>
-            <p className="text-sm">هذا الفيديو يأخذ استراحة!</p>
-          </div>
-        )}
+    <div className="w-full glass-card rounded-[3rem] p-4 lg:p-8 border border-white/20 transition-all duration-500 hover:border-white/40">
+      <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-2xl video-container mb-8 bg-black/40">
+        <iframe
+          src={embedUrl}
+          className="w-full h-full"
+          title={video.title}
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        ></iframe>
       </div>
 
-      <div className="p-6 flex items-center justify-between">
-        <div>
-          <h3 className="font-bold text-xl mb-1 truncate w-48">{video.title}</h3>
-          <span className="text-xs bg-white/20 px-3 py-1 rounded-full uppercase font-bold tracking-tighter">
-            {video.category}
-          </span>
+      <div className="flex flex-col lg:flex-row gap-8 items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-4 mb-4">
+            <h3 className="text-3xl lg:text-4xl font-black truncate max-w-[80%]">{video.title}</h3>
+            <button 
+              onClick={onSave}
+              className={`p-4 rounded-2xl transition-all ${isSaved ? 'bg-yellow-400 text-slate-900 shadow-xl' : 'bg-white/10'}`}
+            >
+              ⭐
+            </button>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm font-bold opacity-50 ml-2">جودة العرض:</span>
+            {qualities.map(q => (
+              <button
+                key={q.id}
+                onClick={() => handleQualityRequest(q.id)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${currentQuality === q.id ? 'bg-sky-500 text-white' : 'bg-white/5 hover:bg-white/20 border border-white/10'}`}
+              >
+                {q.label}
+              </button>
+            ))}
+          </div>
         </div>
-        
-        <button
-          onClick={onSave}
-          className={`
-            p-4 rounded-2xl transition-all duration-300
-            ${isSaved ? 'bg-yellow-400 text-slate-900 shadow-lg' : 'bg-white/10 hover:bg-white/30'}
-          `}
-        >
-          <span className="text-xl">⭐</span>
-        </button>
       </div>
+
+      {/* Suggestions Row Below Video */}
+      <div className="mt-12 pt-8 border-t border-white/10">
+        <h4 className="text-xl font-bold mb-6 flex items-center gap-3">
+          <span>🍪</span> فيديوهات قد تحبها
+        </h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {suggestions.map(v => (
+            <button
+              key={`suggest-${v.id}`}
+              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); onSelectVideo(v); }}
+              className="glass-card p-4 rounded-[2rem] text-right transition-all hover:scale-[1.05] border border-white/5 group bg-white/5 hover:bg-white/10"
+            >
+              <div className="aspect-video bg-white/5 rounded-2xl mb-3 overflow-hidden shadow-lg border border-white/10">
+                <img 
+                  src={getYoutubeThumb(v.url)} 
+                  alt={v.title}
+                  className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                />
+              </div>
+              <p className="text-xs font-bold truncate tracking-tight">{v.title}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Admin Password Modal for Quality */}
+      {showQualityModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-6">
+          <div className="glass-card p-12 rounded-[3.5rem] w-full max-w-sm text-center border-white/30 animate-scale-up">
+            <div className="text-6xl mb-6">👧👦</div>
+            <h3 className="text-2xl font-black mb-2">استأذن من والديك</h3>
+            <p className="text-sm opacity-60 mb-8">يجب إدخال كلمة السر لتغيير الجودة</p>
+            
+            <input 
+              type="password" 
+              placeholder="أدخل كلمة السر"
+              className="w-full bg-white/10 border border-white/20 p-5 rounded-[2rem] mb-4 text-center text-white outline-none focus:bg-white/20"
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+              autoFocus
+            />
+            {error && <p className="text-red-400 text-xs mb-4 font-bold">كلمة السر خاطئة يا بطل!</p>}
+            
+            <div className="flex gap-4">
+              <button onClick={verifyPass} className="flex-1 bg-white text-sky-600 font-black py-4 rounded-[1.5rem] shadow-xl hover:bg-sky-50">تأكيد</button>
+              <button onClick={() => setShowQualityModal(false)} className="flex-1 bg-white/10 font-bold py-4 rounded-[1.5rem] hover:bg-white/20">إغلاق</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
